@@ -1,2 +1,29 @@
-# student-reflection-ai-backend
-Backend implementation of Student Reflection AI, developed using Spring Boot and MySQL. Handles authentication, user management, data storage, and RESTful API services, forming the foundation for AI-powered student reflection and personal growth features.
+# Student Reflection AI - Backend
+
+Backend API for the Student Reflection AI platform.
+
+## Features
+
+- User Authentication
+- Secure Login System
+- Spring Security Integration
+- MySQL Database
+- REST API Architecture
+- JPA/Hibernate ORM
+
+## Tech Stack
+
+- Java
+- Spring Boot
+- Spring Security
+- MySQL
+- Maven
+- Hibernate/JPA
+
+## Project Status
+
+Currently under active development.
+
+## Author
+
+Pubudini Rathnayake
