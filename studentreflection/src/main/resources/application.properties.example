@@ -1,10 +1,13 @@
 spring.application.name=studentreflection
 
 spring.datasource.url=jdbc:mysql://localhost:3307/student_reflection_db
-spring.datasource.username=root
-spring.datasource.password=15127
+spring.datasource.username=your_mysql_username
+spring.datasource.password=your_mysql_password
 
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
-
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+jwt.secret=your_long_random_jwt_secret_here
+
+gemini.api.key=your_gemini_api_key_here
