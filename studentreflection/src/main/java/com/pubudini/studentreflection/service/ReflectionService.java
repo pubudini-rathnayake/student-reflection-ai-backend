@@ -8,6 +8,7 @@ import com.pubudini.studentreflection.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ReflectionService {
@@ -28,10 +29,16 @@ public class ReflectionService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Call 1: AI insight
         String insight = claudeService.getInsight(
                 request.getReflection(),
                 request.getMood(),
                 request.getProductivity()
+        );
+
+        // Call 2: Sentiment analysis (NEW)
+        Map<String, String> analysis = claudeService.analyzeSentiment(
+                request.getReflection()
         );
 
         Reflection reflection = new Reflection();
@@ -40,6 +47,11 @@ public class ReflectionService {
         reflection.setMood(request.getMood());
         reflection.setProductivity(request.getProductivity());
         reflection.setAiInsight(insight);
+
+        // Save sentiment fields (NEW)
+        reflection.setSentiment(analysis.getOrDefault("sentiment", "Neutral"));
+        reflection.setEmotion(analysis.getOrDefault("emotion", "Calm"));
+        reflection.setStressLevel(analysis.getOrDefault("stressLevel", "Low"));
 
         return reflectionRepository.save(reflection);
     }

@@ -24,6 +24,11 @@ public class Reflection {
     @Column(columnDefinition = "TEXT")
     private String aiInsight;
 
+    // NEW FIELDS
+    private String sentiment;    // Positive / Neutral / Negative
+    private String emotion;      // Joy / Sadness / Fear / Anger / Stress / Calm
+    private String stressLevel;  // Low / Medium / High
+
     private LocalDateTime createdAt;
 
     @PrePersist
@@ -31,7 +36,7 @@ public class Reflection {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Getters and Setters
+    // Existing getters/setters
     public Long getId() { return id; }
 
     public User getUser() { return user; }
@@ -50,4 +55,14 @@ public class Reflection {
     public void setAiInsight(String aiInsight) { this.aiInsight = aiInsight; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
+
+    // NEW getters/setters
+    public String getSentiment() { return sentiment; }
+    public void setSentiment(String sentiment) { this.sentiment = sentiment; }
+
+    public String getEmotion() { return emotion; }
+    public void setEmotion(String emotion) { this.emotion = emotion; }
+
+    public String getStressLevel() { return stressLevel; }
+    public void setStressLevel(String stressLevel) { this.stressLevel = stressLevel; }
 }
