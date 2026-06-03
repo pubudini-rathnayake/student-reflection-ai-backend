@@ -27,7 +27,8 @@ public class Reflection {
     // NEW FIELDS
     private String sentiment;    // Positive / Neutral / Negative
     private String emotion;      // Joy / Sadness / Fear / Anger / Stress / Calm
-    private String stressLevel;  // Low / Medium / High
+    private String stressLevel;// Low / Medium / High
+    private String detectedLanguage;
 
     private LocalDateTime createdAt;
 
@@ -65,4 +66,7 @@ public class Reflection {
 
     public String getStressLevel() { return stressLevel; }
     public void setStressLevel(String stressLevel) { this.stressLevel = stressLevel; }
+
+    public String getDetectedLanguage() { return detectedLanguage; }
+    public void setDetectedLanguage(String detectedLanguage) { this.detectedLanguage = detectedLanguage; }
 }

@@ -29,16 +29,11 @@ public class ReflectionService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Call 1: AI insight
-        String insight = claudeService.getInsight(
+        // ONE single Gemini call for everything
+        Map<String, String> analysis = claudeService.analyzeReflection(
                 request.getReflection(),
                 request.getMood(),
                 request.getProductivity()
-        );
-
-        // Call 2: Sentiment analysis (NEW)
-        Map<String, String> analysis = claudeService.analyzeSentiment(
-                request.getReflection()
         );
 
         Reflection reflection = new Reflection();
@@ -46,12 +41,11 @@ public class ReflectionService {
         reflection.setReflection(request.getReflection());
         reflection.setMood(request.getMood());
         reflection.setProductivity(request.getProductivity());
-        reflection.setAiInsight(insight);
-
-        // Save sentiment fields (NEW)
+        reflection.setAiInsight(analysis.getOrDefault("aiInsight", "🌸 Keep going!"));
         reflection.setSentiment(analysis.getOrDefault("sentiment", "Neutral"));
         reflection.setEmotion(analysis.getOrDefault("emotion", "Calm"));
         reflection.setStressLevel(analysis.getOrDefault("stressLevel", "Low"));
+        reflection.setDetectedLanguage(analysis.getOrDefault("detectedLanguage", "English"));
 
         return reflectionRepository.save(reflection);
     }
