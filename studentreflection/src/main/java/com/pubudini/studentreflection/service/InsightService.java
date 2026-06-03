@@ -121,4 +121,21 @@ public class InsightService {
         String result = claudeService.callGeminiPublic(prompt, 200);
         return Map.of("productivityInsight", result);
     }
+
+    public Map<String, String> getStudyPrediction(String email) {
+        String history = buildHistory(email, 10);
+
+        String prompt = String.format("""
+            You are a predictive wellness coach for students. Analyze these journal entries:
+
+            %s
+
+            Based on the stress and mood patterns you see, predict what the student might
+            experience in the next few days. Give a 2-3 sentence prediction and one proactive
+            tip to help them prepare. Be warm, specific, and helpful — not alarming.
+            """, history);
+
+        String result = claudeService.callGeminiPublic(prompt, 250);
+        return Map.of("studyPrediction", result);
+    }
 }

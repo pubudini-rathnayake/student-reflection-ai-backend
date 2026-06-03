@@ -41,4 +41,10 @@ public class InsightController {
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(insightService.getProductivityInsight(userDetails.getUsername()));
     }
+
+    @GetMapping("/prediction")
+    public ResponseEntity<Map<String, String>> getStudyPrediction(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(insightService.getStudyPrediction(userDetails.getUsername()));
+    }
 }

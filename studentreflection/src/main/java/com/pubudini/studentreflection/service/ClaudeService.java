@@ -5,9 +5,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 @Service
 public class ClaudeService {
@@ -19,115 +19,86 @@ public class ClaudeService {
             .baseUrl("https://generativelanguage.googleapis.com")
             .build();
 
-    // --- AI Insight (existing) ---
-    public String getInsight(String reflection, String mood, String productivity) {
+    // --- Combined single call: insight + sentiment + language ---
+    public Map<String, String> analyzeReflection(String reflection, String mood, String productivity) {
         String prompt = String.format("""
-                You are a compassionate and encouraging AI wellness coach for students.
+                You are a compassionate AI wellness coach for students.
+                Analyze this student journal entry and respond in EXACTLY this format, nothing else:
 
-                A student has submitted the following daily reflection:
-                Reflection: "%s"
-                Mood: %s
-                Productivity: %s
-
-                Please provide a warm, empathetic, and actionable insight (3-4 sentences max).
-                Focus on emotional support, one practical tip, and an encouraging closing note.
-                Keep the tone gentle, like a supportive mentor — not clinical.
-                Do not use bullet points. Write in flowing, natural sentences.
-                """, reflection, mood, productivity);
-
-        return callGemini(prompt, 300);
-    }
-
-    // --- Sentiment Analysis (NEW) ---
-    public Map<String, String> analyzeSentiment(String reflection) {
-        String prompt = String.format("""
-                Analyze the following student journal entry.
-                Respond ONLY in this exact format, nothing else:
+                INSIGHT: (write a warm, empathetic 3-4 sentence insight here. Focus on emotional support, one practical tip, and encouragement. No bullet points.)
                 SENTIMENT: Positive
                 EMOTION: Joy
                 STRESS: Low
+                LANGUAGE: English
 
-                Use ONLY these exact values:
-                SENTIMENT must be one of: Positive, Neutral, Negative
-                EMOTION must be one of: Joy, Calm, Sadness, Fear, Anger, Stress
-                STRESS must be one of: Low, Medium, High
+                Rules:
+                - SENTIMENT must be one of: Positive, Neutral, Negative
+                - EMOTION must be one of: Joy, Calm, Sadness, Fear, Anger, Stress
+                - STRESS must be one of: Low, Medium, High
+                - LANGUAGE must be one of: English, Sinhala, Mixed
+                - INSIGHT should be warm and personal, like a caring mentor
 
-                Journal entry: "%s"
-                """, reflection);
+                Student reflection: "%s"
+                Mood: %s
+                Productivity: %s
+                """, reflection, mood, productivity);
 
-        String raw = callGemini(prompt, 50);
+        String raw = callGemini(prompt, 500);
 
         Map<String, String> result = new HashMap<>();
+        result.put("aiInsight", "🌸 Your reflection has been saved. Keep going!");
         result.put("sentiment", "Neutral");
         result.put("emotion", "Calm");
         result.put("stressLevel", "Low");
+        result.put("detectedLanguage", "English");
 
         try {
-            for (String line : raw.split("\n")) {
+            String[] lines = raw.split("\n");
+            StringBuilder insightBuilder = new StringBuilder();
+            boolean readingInsight = false;
+
+            for (String line : lines) {
                 line = line.trim();
-                if (line.startsWith("SENTIMENT:")) {
+                if (line.startsWith("INSIGHT:")) {
+                    insightBuilder.append(line.replace("INSIGHT:", "").trim());
+                    readingInsight = true;
+                } else if (line.startsWith("SENTIMENT:")) {
+                    readingInsight = false;
                     result.put("sentiment", line.replace("SENTIMENT:", "").trim());
                 } else if (line.startsWith("EMOTION:")) {
+                    readingInsight = false;
                     result.put("emotion", line.replace("EMOTION:", "").trim());
                 } else if (line.startsWith("STRESS:")) {
+                    readingInsight = false;
                     result.put("stressLevel", line.replace("STRESS:", "").trim());
+                } else if (line.startsWith("LANGUAGE:")) {
+                    readingInsight = false;
+                    result.put("detectedLanguage", line.replace("LANGUAGE:", "").trim());
+                } else if (readingInsight && !line.isEmpty()) {
+                    insightBuilder.append(" ").append(line);
                 }
             }
+
+            if (insightBuilder.length() > 0) {
+                result.put("aiInsight", insightBuilder.toString().trim());
+            }
+
         } catch (Exception e) {
-            // defaults already set above
+            System.err.println("❌ Parse error: " + e.getMessage());
         }
 
         return result;
     }
 
-    // --- Multilingual insight ---
-    public String getInsightMultilingual(String reflection, String mood,
-                                         String productivity, String language) {
-        String langInstruction = language.equals("Sinhala")
-                ? "The student wrote in Sinhala. Please respond in both Sinhala and English."
-                : "Respond in English.";
-
-        String prompt = String.format("""
-                You are a compassionate AI wellness coach for students.
-                %s
-
-                Reflection: "%s"
-                Mood: %s
-                Productivity: %s
-
-                Provide a warm, empathetic insight (3-4 sentences).
-                Focus on emotional support, one practical tip, and encouragement.
-                Do not use bullet points. Write in flowing sentences.
-                """, langInstruction, reflection, mood, productivity);
-
-        return callGemini(prompt, 400);
-    }
-
-    // --- Language detection ---
-    public String detectLanguage(String text) {
-        String prompt = String.format("""
-                Detect the language of this text and respond with ONLY one word.
-                If it is Sinhala (or Sinhala mixed with English), respond: Sinhala
-                If it is English, respond: English
-                If it is mixed, respond: Mixed
-
-                Text: "%s"
-                """, text);
-
-        try {
-            return callGemini(prompt, 10).trim();
-        } catch (Exception e) {
-            return "English";
-        }
-    }
-
-    // --- Public wrapper for InsightService ---
+    // --- For InsightService (burnout, suggestions, etc.) ---
     public String callGeminiPublic(String prompt, int maxTokens) {
         return callGemini(prompt, maxTokens);
     }
 
     // --- Shared Gemini caller ---
     private String callGemini(String prompt, int maxTokens) {
+        System.out.println("🔑 API Key loaded: " + (apiKey != null ? apiKey.substring(0, 8) + "..." : "NULL"));
+
         Map<String, Object> requestBody = Map.of(
                 "contents", List.of(
                         Map.of("parts", List.of(Map.of("text", prompt)))
@@ -137,7 +108,7 @@ public class ClaudeService {
 
         try {
             Map response = webClient.post()
-                    .uri("/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey)
+                    .uri("/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" + apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(requestBody)
                     .retrieve()
@@ -154,6 +125,8 @@ public class ClaudeService {
             return (String) parts.get(0).get("text");
 
         } catch (Exception e) {
+            System.err.println("❌ Gemini API error: " + e.getMessage());
+            e.printStackTrace();
             return "🌸 Your reflection has been saved. Keep going!";
         }
     }
