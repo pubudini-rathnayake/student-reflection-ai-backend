@@ -21,36 +21,46 @@ public class ClaudeService {
 
     // --- Combined single call: insight + sentiment + language ---
     public Map<String, String> analyzeReflection(String reflection, String mood, String productivity) {
+
+        // Detect language first with a simple check
+        boolean isSinhala = reflection.chars().anyMatch(c -> c >= 0x0D80 && c <= 0x0DFF);
+
+        String insightInstruction = isSinhala
+                ? "IMPORTANT: The student wrote in Sinhala. You MUST write the INSIGHT in both Sinhala and English. First write in Sinhala, then write the English translation below it."
+                : "Write the INSIGHT in English only.";
+
         String prompt = String.format("""
-                You are a compassionate AI wellness coach for students.
-                Analyze this student journal entry and respond in EXACTLY this format, nothing else:
+            You are a compassionate AI wellness coach for students.
+            Analyze this student journal entry and respond in EXACTLY this format, nothing else:
 
-                INSIGHT: (write a warm, empathetic 3-4 sentence insight here. Focus on emotional support, one practical tip, and encouragement. No bullet points.)
-                SENTIMENT: Positive
-                EMOTION: Joy
-                STRESS: Low
-                LANGUAGE: English
+            INSIGHT: (your insight here)
+            SENTIMENT: Positive
+            EMOTION: Joy
+            STRESS: Low
+            LANGUAGE: English
 
-                Rules:
-                - SENTIMENT must be one of: Positive, Neutral, Negative
-                - EMOTION must be one of: Joy, Calm, Sadness, Fear, Anger, Stress
-                - STRESS must be one of: Low, Medium, High
-                - LANGUAGE must be one of: English, Sinhala, Mixed
-                - INSIGHT should be warm and personal, like a caring mentor
+            %s
 
-                Student reflection: "%s"
-                Mood: %s
-                Productivity: %s
-                """, reflection, mood, productivity);
+            Rules:
+            - SENTIMENT must be one of: Positive, Neutral, Negative
+            - EMOTION must be one of: Joy, Calm, Sadness, Fear, Anger, Stress
+            - STRESS must be one of: Low, Medium, High
+            - LANGUAGE must be one of: English, Sinhala, Mixed
+            - INSIGHT should be warm and personal, like a caring mentor
 
-        String raw = callGemini(prompt, 500);
+            Student reflection: "%s"
+            Mood: %s
+            Productivity: %s
+            """, insightInstruction, reflection, mood, productivity);
+
+        String raw = callGemini(prompt, 600);
 
         Map<String, String> result = new HashMap<>();
         result.put("aiInsight", "🌸 Your reflection has been saved. Keep going!");
         result.put("sentiment", "Neutral");
         result.put("emotion", "Calm");
         result.put("stressLevel", "Low");
-        result.put("detectedLanguage", "English");
+        result.put("detectedLanguage", isSinhala ? "Sinhala" : "English");
 
         try {
             String[] lines = raw.split("\n");
