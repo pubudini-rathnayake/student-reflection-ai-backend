@@ -2,6 +2,8 @@
 
 > A secure Spring Boot REST API powering the Student Reflection AI platform — an AI-powered wellness platform for students with real-time sentiment analysis, emotion classification, and personalized Google Gemini AI insights.
 
+**Frontend Repository:** [student-reflection-ai-frontend](https://github.com/pubudini-rathnayake/student-reflection-ai-frontend) (React + Vite + Tailwind CSS)
+
 [![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.java.com/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring&logoColor=white)](https://spring.io/projects/spring-boot)
 [![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
